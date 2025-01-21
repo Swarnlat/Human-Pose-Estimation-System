@@ -1,0 +1,11 @@
+# Human-pose-estimation
+Human-Pose-Estimation
+There are few things which we need on our system :
+1. Python Installation (Version 3.6 or above):
+Ensure Python is installed on your system. Download Python from the official website: https://www.python.org/downloads/. The code is compatible with Python version 3.6 or above.
+2. OpenCV and Matplotlib Installation:
+To install the OpenCV and Matplotlib Installation library, run the following command in your terminal: 
+• Copy the code: “pip install opencv-python
+pip install matplotlib”
+3.Jupyter Notebook/ VS CODE:Ensure that you have Jupyter installed/VS CODE 
+as i have completed the code via vs code .
