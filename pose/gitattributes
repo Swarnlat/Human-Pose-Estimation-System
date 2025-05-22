@@ -1,0 +1,20 @@
+pose stimation is a computer vision technique for tracking the movements of a person or an object . it is usually performed by finding the location of key points for the given objects. we csn compare various movements anf postures based on these key points aand draw insightss.used in robotics,gaming,animation.
+
+mothods -
+1.open pose 
+2.posee net 
+3. blaze pose 
+4.deep pose 
+5.dense pose 
+6.deeep cut
+
+(using blaze pose = )
+(media pipe as a framework )
+
+
+
+
+
+
+# Auto detect text files and perform LF normalization
+* text=auto

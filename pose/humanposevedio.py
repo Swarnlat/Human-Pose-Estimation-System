@@ -1,0 +1,108 @@
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+# Define body parts and their indices
+BODY_PARTS = {
+    "Nose": 0, "Neck": 1, "RShoulder": 2, "RElbow": 3, "RWrist": 4,
+    "LShoulder": 5, "LElbow": 6, "LWrist": 7, "RHip": 8, "RKnee": 9,
+    "RAnkle": 10, "LHip": 11, "LKnee": 12, "LAnkle": 13, "REye": 14,
+    "LEye": 15, "REar": 16, "LEar": 17, "Background": 18
+}
+
+# Define the connections (pairs of keypoints)
+POSE_PAIRS = [
+    ["Neck", "RShoulder"], ["Neck", "LShoulder"], ["RShoulder", "RElbow"],
+    ["RElbow", "RWrist"], ["LShoulder", "LElbow"], ["LElbow", "LWrist"],
+    ["Neck", "RHip"], ["RHip", "RKnee"], ["RKnee", "RAnkle"], ["Neck", "LHip"],
+    ["LHip", "LKnee"], ["LKnee", "LAnkle"], ["Neck", "Nose"], ["Nose", "REye"],
+    ["REye", "REar"], ["Nose", "LEye"], ["LEye", "LEar"]
+]
+
+# Model parameters
+INPUT_WIDTH = 368
+INPUT_HEIGHT = 368
+CONFIDENCE_THRESHOLD = 0.2
+
+# Load the pre-trained model
+MODEL_PATH = "graph_opt.pb"
+net = cv2.dnn.readNetFromTensorflow(MODEL_PATH)
+
+def pose_estimation(video_path):
+    """
+    Perform human pose estimation on a video, supporting multiple persons.
+    """
+    # Open the video file or webcam
+    cap = cv2.VideoCapture(video_path)
+
+    if not cap.isOpened():
+        print("Error: Could not open video source.")
+        return
+
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:
+            print("End of video or unable to read frame.")
+            break
+
+        # Resize frame for faster processing (optional)
+        frame = cv2.resize(frame, None, fx=0.5, fy=0.5)
+
+        frame_width = frame.shape[1]
+        frame_height = frame.shape[0]
+
+      
+        blob = cv2.dnn.blobFromImage(
+            frame, 1.0, (INPUT_WIDTH, INPUT_HEIGHT), (127.5, 127.5, 127.5),
+            swapRB=True, crop=False
+        )
+        net.setInput(blob)
+
+        out = net.forward()
+        out = out[:, :19, :, :]  
+
+        detected_points = []
+
+        # For each keypoint, detect its location
+        for i in range(len(BODY_PARTS)):
+            heat_map = out[0, i, :, :]
+            _, conf, _, point = cv2.minMaxLoc(heat_map)
+
+            x = (frame_width * point[0]) / out.shape[3]
+            y = (frame_height * point[1]) / out.shape[2]
+            detected_points.append((int(x), int(y)) if conf > CONFIDENCE_THRESHOLD else None)
+
+        # Draw skeletons for each person
+        for pair in POSE_PAIRS:
+            part_from = pair[0]
+            part_to = pair[1]
+
+            id_from = BODY_PARTS[part_from]
+            id_to = BODY_PARTS[part_to]
+
+            if detected_points[id_from] and detected_points[id_to]:
+                cv2.line(frame, detected_points[id_from], detected_points[id_to], (0, 255, 0), 3)
+                cv2.circle(frame, detected_points[id_from], 5, (0, 0, 255), -1)
+                cv2.circle(frame, detected_points[id_to], 5, (0, 0, 255), -1)
+
+        # Display inference time
+        t, _ = net.getPerfProfile()
+        inference_time = t * 1000.0 / cv2.getTickFrequency()
+        cv2.putText(
+            frame, f"Inference Time: {inference_time:.2f} ms", (10, 30),
+            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1
+        )
+
+        cv2.imshow("Pose Estimation", frame)
+
+        # Exit when 'q' is pressed
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+
+pose_estimation("run1.mp4")
+
